@@ -48,15 +48,22 @@ ORDER BY avg_weeks_on_chart DESC
 cursor.execute(query1)
 rows = cursor.fetchall()
 
-df1 = pd.DataFrame(rows, columns=["Genre", "Average Weeks"])
+df1 = pd.DataFrame(rows, columns=["genre", "average_weeks"])
+
+# Save table result
+df1.to_csv("results/tables/genre_chart_longevity.csv", index=False)
 
 plt.figure()
-plt.bar(df1["Genre"], df1["Average Weeks"])
+plt.bar(df1["genre"], df1["average_weeks"])
 plt.xlabel("Genre")
 plt.ylabel("Average Weeks on Chart")
 plt.title("Average Spotify Chart Longevity by Genre")
 plt.xticks(rotation=45)
 plt.tight_layout()
+
+# Save figure
+plt.savefig("results/figures/genre_chart_longevity.png", dpi=300)
+# Show figure
 plt.show()
 
 # Research Question 2
@@ -85,17 +92,32 @@ WHERE s.song_id NOT IN (
 cursor.execute(query3)
 nonviral_result = cursor.fetchone()
 
+viral_count = viral_result[0]
 viral_avg = viral_result[1]
+
+nonviral_count = nonviral_result[0]
 nonviral_avg = nonviral_result[1]
 
-labels = ["TikTok Viral", "Non Viral"]
-values = [viral_avg, nonviral_avg]
+df2 = pd.DataFrame({
+    "category": ["TikTok Viral", "Non Viral"],
+    "num_songs": [viral_count, nonviral_count],
+    "average_weeks": [viral_avg, nonviral_avg]})
+
+# Save table result
+df2.to_csv("results/tables/tiktok_chart_longevity.csv", index=False)
+
+labels = [f"TikTok Viral (n={viral_count})", f"Non Viral (n={nonviral_count})"]
 
 plt.figure()
-plt.bar(labels, values)
+plt.bar(labels, df2['average_weeks'])
 plt.ylabel("Average Weeks on Chart")
 plt.title("Spotify Chart Longevity: TikTok Viral vs Non-Viral Songs")
 plt.tight_layout()
+
+# Save figure
+plt.savefig("results/figures/tiktok_chart_longevity.png", dpi=300)
+
+# Show figure
 plt.show()
 
 cursor.close()
