@@ -85,7 +85,7 @@ WHERE s.song_id NOT IN (
 cursor.execute(query3)
 nonviral_result = cursor.fetchone()
 
-iral_avg = viral_result[1]
+viral_avg = viral_result[1]
 nonviral_avg = nonviral_result[1]
 
 labels = ["TikTok Viral", "Non Viral"]
