@@ -106,10 +106,8 @@ df2 = pd.DataFrame({
 # Save table result
 df2.to_csv("results/tables/tiktok_chart_longevity.csv", index=False)
 
-labels = [f"TikTok Viral (n={viral_count})", f"Non Viral (n={nonviral_count})"]
-
 plt.figure()
-plt.bar(labels, df2['average_weeks'])
+plt.bar(df2['category'], df2['average_weeks'])
 plt.ylabel("Average Weeks on Chart")
 plt.title("Spotify Chart Longevity: TikTok Viral vs Non-Viral Songs")
 plt.tight_layout()
