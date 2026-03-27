@@ -6,6 +6,7 @@ from turtle import lt
 import pymongo
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 # IMPORTANT: UPDATE THESE BEFORE RUNNING
 CWL = 'xxx'
@@ -37,9 +38,7 @@ else:
         {"$project": {
             "genre": 1,
             "weeks_on_chart": {"$size": "$chart_history"}
-        }},
-        # Sort by average weeks on chart in descending order (replaces the ORDER BY in SQL)
-        {"$sort": {"avg_weeks_on_chart": -1}}
+        }}
     ]
 
     # Execute the aggregation pipeline and convert results to a list
@@ -74,6 +73,42 @@ else:
     # Show figure
     plt.show()
 
+    # Strip plot of weeks on chart by genre
+    plt.figure()
+
+    # Create strip plot
+    plt.figure(figsize=(10, 6))
+    sns.stripplot(
+        data=df1,
+        x="genre",
+        y="weeks_on_chart",
+        order=genre_order,
+        jitter=True,
+        alpha=0.6)
+
+    # Show average weeks on chart for each genre using a point plot (without error bars)
+    sns.pointplot(
+        data=df1,
+        x="genre",
+        y="weeks_on_chart",
+        order=genre_order,
+        color="red",
+        markers="o",
+        linestyles="",
+        errorbar=None 
+)
+    # Customize plot and labels
+    plt.xticks(rotation=45)
+    plt.xlabel("Genre")
+    plt.ylabel("Weeks on Chart")
+    plt.title("Weeks on Chart Distribution by Genre (with Averages)")
+    plt.tight_layout()
+
+    # Save figure
+    plt.savefig("results/figures/mongo_genre_stripplot.png", dpi=300)
+    # Show figure
+    plt.show()
+
     # ----------------------------------------------------------
     # Research question 2: Do songs that go viral on TikTok remain
     # on the Spotify Top 200 chart for a longer duration compared 
@@ -95,9 +130,7 @@ else:
                     "else": "Non Viral"
                 }
             }
-        }},
-        # Sort by viral status
-        {"$sort": {"_id": 1}}
+        }}
     ]
 
     # Execute the aggregation pipeline and convert results to a list
@@ -117,6 +150,41 @@ else:
 
     # Save figure
     plt.savefig("results/figures/mongo_tiktok_viral_boxplot.png", dpi=300)
+    # Show figure
+    plt.show()
+
+    # Define colours for the histogram
+    palette = {
+    "TikTok Viral": "orange",
+    "Non Viral": "blue"}
+
+    # Histogram of weeks on chart by viral status
+    plt.figure()
+    sns.histplot(
+        data=df2,
+        x="weeks_on_chart",
+        hue="is_viral",
+        bins=20,
+        alpha=0.5,
+        multiple="layer",
+        palette=palette
+    )
+    
+    # Add vertical lines for the average weeks on chart for each group
+    means = df2.groupby("is_viral")["weeks_on_chart"].mean()
+
+    plt.axvline(means["TikTok Viral"], linestyle='dashed', linewidth=2, color="orange", label="Viral Avg")
+    plt.axvline(means["Non Viral"], linestyle='dashed', linewidth=2, color="blue", label="Non-Viral Avg")
+
+    # Customize plot and labels
+    plt.xlabel("Weeks on Chart")
+    plt.ylabel("Frequency")
+    plt.title("Distribution of Chart Longevity: Viral vs Non-Viral Songs")
+    plt.legend()
+    plt.tight_layout()
+
+    # Save figure
+    plt.savefig("results/figures/mongo_tiktok_histogram.png", dpi=300)
     # Show figure
     plt.show()
 
