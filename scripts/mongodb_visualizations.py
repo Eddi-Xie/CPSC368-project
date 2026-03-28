@@ -84,10 +84,10 @@ sns.pointplot(
 )
 
 # Customize plot and labels
-plt.xticks(rotation=45)
-plt.xlabel("Genre")
-plt.ylabel("Weeks on Chart")
-plt.title("Distribution of Spotify Chart Longevity by Genre (with Averages)")
+plt.xticks(rotation=45, fontsize=12)
+plt.xlabel("Genre", fontsize=14)
+plt.ylabel("Weeks on Chart", fontsize=14)
+plt.title("Distribution of Spotify Chart Longevity by Genre (with Averages)", fontsize=16)
 plt.legend(loc="upper right")
 plt.tight_layout()
 
