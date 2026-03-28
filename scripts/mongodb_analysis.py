@@ -2,6 +2,7 @@
 
 # Import necessary libraries
 import pymongo
+import pandas as pd
 
 # IMPORTANT: UPDATE THESE BEFORE RUNNING
 CWL = 'xxx'
@@ -17,75 +18,85 @@ else:
     client = pymongo.MongoClient(connection_string)
     db = client[CWL]
 
-    # ----------------------------------------------------------
-    # Research question 1: How does genre affect the average number
-    # of weeks a track remains on the Spotify Top 200 chart?
-    # ----------------------------------------------------------
+# ----------------------------------------------------------
+# Research question 1: How does genre affect the average number
+# of weeks a track remains on the Spotify Top 200 chart?
+# ----------------------------------------------------------
 
-    pipeline1 = [
-        # Only consider songs with chart history and genre (similar to the WHERE clause in SQL)
-        {"$match": {
-            "chart_history": {"$exists": True},
-            "genre": {"$ne": None}
-        }},
-        # Project the genre and calculate weeks on chart 
-        # (replaces the SELECT + calculation of weeks on chart in SQL)
-        {"$project": {
-            "genre": 1,
-            "weeks_on_chart": {"$size": "$chart_history"}
-        }},
-        # Group by genre and calculate average weeks on chart (replaces the GROUP BY and AVG in SQL)
-        {"$group": {
-            "_id": "$genre",
-            "avg_weeks_on_chart": {"$avg": "$weeks_on_chart"}
-        }},
-        # Sort by average weeks on chart in descending order (replaces the ORDER BY in SQL)
-        {"$sort": {"avg_weeks_on_chart": -1}}
-    ]
+pipeline1 = [
+    # Only consider songs with chart history and genre (similar to the WHERE clause in SQL)
+    {"$match": {
+        "chart_history": {"$exists": True},
+        "genre": {"$ne": None}
+    }},
+    # Project the genre and calculate weeks on chart 
+    # (replaces the SELECT + calculation of weeks on chart in SQL)
+    {"$project": {
+        "genre": 1,
+        "weeks_on_chart": {"$size": "$chart_history"}
+    }},
+    # Group by genre and calculate average weeks on chart (replaces the GROUP BY and AVG in SQL)
+    {"$group": {
+        "_id": "$genre",
+        "avg_weeks_on_chart": {"$avg": "$weeks_on_chart"}
+    }},
+    # Sort by average weeks on chart in descending order (replaces the ORDER BY in SQL)
+    {"$sort": {"avg_weeks_on_chart": -1}}
+]
 
-    # Execute the aggregation pipeline and convert results to a list
-    result1 = list(db["song"].aggregate(pipeline1))
-    print("Average Spotify Chart Longevity by Genre:")
-    for row in result1:
-        print(f"  {row['_id']}: {row['avg_weeks_on_chart']:.2f} weeks")
+# Execute the aggregation pipeline and convert results to a list
+result1 = list(db["song"].aggregate(pipeline1))
+print("Average Spotify Chart Longevity by Genre:")
+for row in result1:
+    print(f"  {row['_id']}: {row['avg_weeks_on_chart']:.2f} weeks")
 
-    # ----------------------------------------------------------
-    # Research question 2: Do songs that go viral on TikTok remain
-    # on the Spotify Top 200 chart for a longer duration compared 
-    # to non-viral songs?
-    # ----------------------------------------------------------
+# Save results to a CSV file
+df1 = pd.DataFrame(result1)
+df1 = df1.rename(columns={"_id": "genre"})
+df1.to_csv("results/tables/mongo_genre_avg_weeks.csv", index=False)
 
-    pipeline2 = [
-        # Only consider songs with chart history (similar to the WHERE clause in SQL)
-        {"$match": {"chart_history": {"$exists": True}}},
-        # Project weeks on chart and determine if the song is TikTok viral
-        # (replaces the SELECT and CASE statement in SQL)
-        {"$project": {
-            "weeks_on_chart": {"$size": "$chart_history"},
-            "is_viral": {
-                "$cond": {
-                    "if": {"$gte": [{"$ifNull": ["$tiktok.popularity", 0]}, 70]},
-                    "then": "TikTok Viral",
-                    "else": "Non Viral"
-                }
+# ----------------------------------------------------------
+# Research question 2: Do songs that go viral on TikTok remain
+# on the Spotify Top 200 chart for a longer duration compared 
+# to non-viral songs?
+# ----------------------------------------------------------
+
+pipeline2 = [
+    # Only consider songs with chart history (similar to the WHERE clause in SQL)
+    {"$match": {"chart_history": {"$exists": True}}},
+    # Project weeks on chart and determine if the song is TikTok viral
+    # (replaces the SELECT and CASE statement in SQL)
+    {"$project": {
+        "weeks_on_chart": {"$size": "$chart_history"},
+        "is_viral": {
+            "$cond": {
+                "if": {"$gte": [{"$ifNull": ["$tiktok.popularity", 0]}, 70]},
+                "then": "TikTok Viral",
+                "else": "Non Viral"
             }
-        }},
-        # Group by viral status and calculate count of songs and average weeks on chart
-        # (replaces the GROUP BY, COUNT, and AVG in SQL)
-        {"$group": {
-            "_id": "$is_viral",
-            "num_songs": {"$sum": 1},
-            "avg_weeks_on_chart": {"$avg": "$weeks_on_chart"}
-        }},
-        # Sort by viral status
-        {"$sort": {"_id": 1}}
-    ]
+        }
+    }},
+    # Group by viral status and calculate count of songs and average weeks on chart
+    # (replaces the GROUP BY, COUNT, and AVG in SQL)
+    {"$group": {
+        "_id": "$is_viral",
+        "num_songs": {"$sum": 1},
+        "avg_weeks_on_chart": {"$avg": "$weeks_on_chart"}
+    }},
+    # Sort by viral status
+    {"$sort": {"_id": 1}}
+]
 
-    # Execute the aggregation pipeline and convert results to a list
-    result2 = list(db["song"].aggregate(pipeline2))
-    print("\nTikTok Viral vs Non-Viral Songs:")
-    for row in result2:
-        print(f"  {row['_id']}: {row['num_songs']} songs, Average weeks on chart: {row['avg_weeks_on_chart']:.2f}")
+# Execute the aggregation pipeline and convert results to a list
+result2 = list(db["song"].aggregate(pipeline2))
+print("\nTikTok Viral vs Non-Viral Songs:")
+for row in result2:
+    print(f"  {row['_id']}: {row['num_songs']} songs, Average weeks on chart: {row['avg_weeks_on_chart']:.2f}")
 
-    client.close()
-    print("\nDone!")
+# Save results to a CSV file
+df2 = pd.DataFrame(result2)
+df2 = df2.rename(columns={"_id": "category"})
+df2.to_csv("results/tables/mongo_tiktok_viral_avg_weeks.csv", index=False)
+
+client.close()
+print("\nDone!")
