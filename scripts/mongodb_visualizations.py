@@ -47,6 +47,16 @@ df1 = pd.DataFrame(result1)
 df1 = df1[["genre", "weeks_on_chart"]]
 df1.to_csv("results/tables/mongo_genre_weeks_on_chart.csv", index=False)
 
+# Summary table with mean, count (n), and standard deviation (sd)
+summary1 = (
+    df1.groupby("genre")["weeks_on_chart"]
+    .agg(avg="mean", n="count", sd="std")
+    .sort_values(by="avg", ascending=False)
+    .reset_index()
+)
+
+summary1.to_csv("results/tables/genre_summary_table.csv", index=False)
+
 # Determine genre order based on average weeks on chart for better visualization
 genre_order = (
 df1.groupby("genre")["weeks_on_chart"]
@@ -126,6 +136,15 @@ result2 = list(db["song"].aggregate(pipeline_visualization2))
 # Save results to a DataFrame and CSV
 df2 = pd.DataFrame(result2)
 df2.to_csv("results/tables/mongo_viral_weeks_on_chart.csv", index=False)
+
+# Summary table with mean, count (n), and standard deviation (sd)
+summary2 = (
+    df2.groupby("is_viral")["weeks_on_chart"]
+    .agg(avg="mean", n="count", sd="std")
+    .reset_index()
+)
+
+summary2.to_csv("results/tables/viral_summary_table.csv", index=False)
 
 # Define colours for the histogram so that it is consistent with the average lines we will add to the plot later
 palette = {
