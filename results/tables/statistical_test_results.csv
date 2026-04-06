@@ -1,0 +1,3 @@
+Research Question,Test,Statistic,P-value
+Genre effect on weeks on chart,Kruskal-Wallis,9.06633,0.1698820886839959
+TikTok viral vs non-viral,Mann-Whitney U,11857.5,1.78816374842177e-14
